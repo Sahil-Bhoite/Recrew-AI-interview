@@ -90,56 +90,57 @@ const CodeIDE = ({ onSubmit, shouldReset = false, onResetComplete, timeLeft }: C
     }
   };
 
+
   return (
     <div className="h-full flex flex-col backdrop-blur-md bg-white/30 shadow-lg rounded-xl" onKeyDown={handleEditorKeyDown}>
-      <div className="flex items-center justify-between p-4 border-b border-white/20">
-        <div className="flex items-center gap-4">
-          <div className="text-xl font-semibold">Code Editor</div>
-          <Select value={language} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((lang) => (
-                <SelectItem key={lang.id} value={lang.id}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="text-sm text-gray-700 ml-auto">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+        <div className="flex items-center justify-between p-4 border-b border-white/20">
+          <div className="flex items-center gap-4">
+            <div className="text-xl font-semibold">Code Editor</div>
+            <Select value={language} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem key={lang.id} value={lang.id}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-gray-700 ml-auto">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+          </div>
         </div>
+        <div className="p-2 bg-white/40 dark:bg-gray-800/40 text-sm backdrop-blur-md border-t border-white/20">
+          You can use the code editor to write your code and submit it in chat
+        </div>
+        <ResizablePanelGroup direction="vertical" className="flex-grow">
+          <ResizablePanel defaultSize={100}>
+            <Editor
+              height="100%"
+              defaultLanguage={language}
+              language={language}
+              theme="vs-dark"
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              onMount={(editor) => {
+                editorRef.current = editor;
+              }}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: "on",
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                readOnly: false,
+                automaticLayout: true,
+                tabSize: 2,
+                wordWrap: "on"
+              }}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
-      <div className="p-2 bg-white/40 dark:bg-gray-800/40 text-sm backdrop-blur-md border-t border-white/20">
-        You can use the code editor to write your code and submit it in chat
-      </div>
-      <ResizablePanelGroup direction="vertical" className="flex-grow">
-        <ResizablePanel defaultSize={100}>
-          <Editor
-            height="100%"
-            defaultLanguage={language}
-            language={language}
-            theme="vs-dark"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            onMount={(editor) => {
-              editorRef.current = editor;
-            }}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: "on",
-              roundedSelection: false,
-              scrollBeyondLastLine: false,
-              readOnly: false,
-              automaticLayout: true,
-              tabSize: 2,
-              wordWrap: "on"
-            }}
-          />
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
   );
 };
 

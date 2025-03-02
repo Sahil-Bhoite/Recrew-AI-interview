@@ -32,12 +32,7 @@ export function useChat() {
       if (lastMessage.role === "assistant") {
         console.log("Checking assistant message for evaluation markers:", 
           lastMessage.content.substring(0, 100));
-        if (lastMessage.content.includes("SOLUTION_CORRECT")) {
-          console.log("Solution marked as CORRECT");
-          setIsCodeEvaluationSuccessful(true);
-        } else {
-          setIsCodeEvaluationSuccessful(false);
-        }
+        setIsCodeEvaluationSuccessful(false);
       }
     }
   }, [messages]);
@@ -101,9 +96,6 @@ export function useChat() {
           }]);
           
           // Check if solution is correct for code submissions
-          if (isCode && reply.includes("SOLUTION_CORRECT")) {
-            console.log("Solution marked as correct, will reset editor");
-          }
         }
       } catch (error) {
         console.error("Error in API call:", error);

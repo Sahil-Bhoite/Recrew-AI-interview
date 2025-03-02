@@ -1,0 +1,12 @@
+[
+  {
+    "candidateName": "John Doe",
+    "linkedin": "https://linkedin.com/in/johndoe",
+    "contacts": "john.doe@example.com",
+    "date" : "02/03/2025",
+    "time" : "02:50 IST ",
+    "timeSpent": "60 minutes",
+    "score": 85,
+    "review": "Selected for next round"
+  }
+]

@@ -9,67 +9,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 
 const InterviewPage = () => {
-  useEffect(() => {
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error("Failed to go fullscreen:", err);
-      });
-    }
-  }, []);
   const [timeLeft, setTimeLeft] = useState(3600);
   const [showWarning, setShowWarning] = useState(false);
   const [userLeftCount, setUserLeftCount] = useState(0);
 
   const { sendMessage, candidateName, messages, isCodeEvaluationSuccessful, isLoading } = useChat();
+  const [questionCount, setQuestionCount] = useState(0);
+  const [difficultyLevel, setDifficultyLevel] = useState(1);
   const navigate = useNavigate();
   const [shouldResetEditor, setShouldResetEditor] = useState(false);
   const { toast } = useToast();
 
-  // Track user leaving the page, block copy/paste, and run a 1-hr timer
   useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.hidden) {
-        setUserLeftCount(prev => {
-          const newVal = prev + 1;
-          if (newVal > 1) {
-            toast({
-              title: "Disqualification Warning",
-              description: "You are disqualified for leaving the interview more than once.",
-              duration: 5000,
-            });
-            navigate("/");
-          }
-          return newVal;
-        });
-      }
-    }
-
-    function blockCopyPaste(e: ClipboardEvent | KeyboardEvent) {
-      setShowWarning(true);
-      e.preventDefault();
-      toast({
-        title: "Action Not Allowed",
-        description: "Copying and pasting is disabled during the interview.",
-        duration: 3000,
-      });
-    }
-
-    function handleScreenshot(e: KeyboardEvent) {
-      if (e.key === "PrintScreen") {
-        setShowWarning(true);
-        toast({
-          title: "Action Not Allowed",
-          description: "Screenshots are disabled during the interview.",
-          duration: 3000,
-        });
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("copy", blockCopyPaste);
-    document.addEventListener("paste", blockCopyPaste);
-    document.addEventListener("keydown", handleScreenshot);
-
     const timerID = setInterval(() => {
       setTimeLeft(prev => { 
         if ([900, 600, 300].includes(prev)) {
@@ -81,12 +32,35 @@ const InterviewPage = () => {
         }
         if (prev <= 1) {
           clearInterval(timerID);
-          toast({
-            title: "Time's up!",
-            description: "The interview has concluded.",
-            duration: 5000,
+          // Save interview results
+          const results = {
+            candidateName: candidateName || "Unknown",
+            linkedin: "https://linkedin.com/in/example", // Placeholder
+            contacts: "example@example.com", // Placeholder
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Calcutta' }),
+            timeSpent: `${3600 - prev} seconds`,
+            score: 85, // Placeholder
+            review: "Selected for next round" // Placeholder
+          };
+          // Append results to the existing results.json file using Node.js
+          const fs = require('fs');
+          fs.readFile('results.json', 'utf8', (err, data) => {
+            if (err) {
+              console.error('Error reading results.json:', err);
+              return;
+            }
+            const resultsArray = JSON.parse(data);
+            resultsArray.push(results);
+            fs.writeFile('results.json', JSON.stringify(resultsArray, null, 2), 'utf8', (err) => {
+              if (err) {
+                console.error('Error writing to results.json:', err);
+              }
+            });
           });
-          navigate("/");
+
+          // Redirect to thank-you page
+          navigate("/ThankYou");
           return 0;
         }
         return prev - 1;
@@ -94,11 +68,7 @@ const InterviewPage = () => {
     }, 1000);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.removeEventListener("copy", blockCopyPaste);
-      document.removeEventListener("paste", blockCopyPaste);
       clearInterval(timerID);
-      document.removeEventListener("keydown", handleScreenshot);
     };
   }, []);
 
@@ -122,7 +92,21 @@ const InterviewPage = () => {
     }
   }, [isCodeEvaluationSuccessful, toast]);
 
-  // Handle code submission from editor
+  // Function to generate the next coding question
+  const generateNextQuestion = () => {
+    if (questionCount < 3) {
+      // Logic to generate a question based on the current difficulty level
+      const question = `Question ${questionCount + 1} with difficulty level ${difficultyLevel}`;
+      sendMessage(question, false);
+      setQuestionCount(prevCount => prevCount + 1);
+      setDifficultyLevel(prevLevel => prevLevel + 1); // Increase difficulty
+    } else {
+      // Logic to conclude the interview
+      console.log("Interview completed. Redirecting to Thank You page.");
+      navigate("/ThankYou");
+    }
+  };
+
   const handleCodeSubmit = (code: string) => {
     // First show a toast notification
     toast({
@@ -131,8 +115,12 @@ const InterviewPage = () => {
       duration: 2000,
     });
     
-    // Send code to chat with isCode flag set to true
-    sendMessage(code, true);
+    // Ensure the code is wrapped in a code block
+    const codeBlock = `\`\`\`\n${code}\n\`\`\``;
+    
+    // After code submission, generate the next question
+    generateNextQuestion();
+    sendMessage(codeBlock, true);
     
     console.log("Code submitted to chat:", code.substring(0, 50) + "...");
   };
@@ -143,11 +131,6 @@ const InterviewPage = () => {
 
   return (
     <>
-      <div className="p-4 text-lg bg-white/50 backdrop-blur-lg shadow-lg rounded-xl text-center relative">
-        {showWarning && <div className="absolute top-0 right-0 bg-yellow-200 text-yellow-800 p-2 rounded">Warning: Action not allowed!</div>}
-        <div className="absolute top-0 right-0 p-2 text-sm text-gray-700">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
-        You have 1 hour. Please do not switch tabs or change screens. Copy/paste is disabled. If you leave the screen more than once, you will be disqualified. Good luck!
-      </div>
       <div className="h-screen bg-background">
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={60} minSize={30}>
